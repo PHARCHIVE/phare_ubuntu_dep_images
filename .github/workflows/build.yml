@@ -1,0 +1,31 @@
+name: CMake Ubuntu
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        images: ['ubuntu:22.04']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Build
+      run: chmod +x build.sh && ./build.sh ${{ matrix.images }}
+
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ secrets.GCHR_USERNAME }}
+        password: ${{ secrets.GCHR_TOKEN }}
+
+    - name: docker push
+      run: docker push ghcr.io/pharchive/phare_dep/${{ matrix.images }}
