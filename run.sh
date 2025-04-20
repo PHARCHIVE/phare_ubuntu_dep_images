@@ -4,9 +4,12 @@ set -ex
 
 apt-get update
 apt-get install -y git make cmake libopenmpi-dev libhdf5-openmpi-dev g++ ninja-build \
-                   ccache python3-dev python3-pip gfortran
+                   ccache python3-dev python3-pip gfortran python3-venv
 
 git clone https://github.com/PHAREHUB/PHARE -b master --depth 1 --recursive --shallow-submodules phare
+
+python3 -m venv .venv
+. .venv/bin/activate
 
 (
     cd phare
@@ -15,6 +18,7 @@ git clone https://github.com/PHAREHUB/PHARE -b master --depth 1 --recursive --sh
     mkdir build
     cd build
     cmake ..
+
 )
 
 (
@@ -30,3 +34,5 @@ git clone https://github.com/PHAREHUB/PHARE -b master --depth 1 --recursive --sh
 
 rm -rf phare
 apt-get autoclean
+
+echo ". $PWD/.venv/bin/activate" >> ~/.bashrc
