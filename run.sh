@@ -25,7 +25,8 @@ python3 -m venv .venv
     cd phare/subprojects/samrai
     mkdir build
     cd build
-    cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_SAMRAI_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
+    cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_SAMRAI_TESTS=OFF -DCMAKE_BUILD_TYPE=Release \
+             -DENABLE_TIMERS=OFF -DENABLE_CHECK_ASSERTIONS=OFF
     make -j2
     make install
     cd ../..
