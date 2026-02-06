@@ -4,7 +4,7 @@ set -ex
 
 apt-get update
 apt-get install -y git make cmake libopenmpi-dev libhdf5-openmpi-dev g++ ninja-build \
-                   ccache python3-dev python3-pip gfortran python3-venv gfortran
+                   ccache python3-dev python3-pip gfortran python3-venv gfortran clang
 
 git clone https://github.com/PHAREHUB/PHARE -b master --depth 1 --recursive --shallow-submodules phare
 
