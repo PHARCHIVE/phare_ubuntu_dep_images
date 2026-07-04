@@ -18,7 +18,6 @@ python3 -m venv .venv
     mkdir build
     cd build
     cmake ..
-
 )
 
 ( 
