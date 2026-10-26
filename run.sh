@@ -9,6 +9,7 @@ apt-get install -y git make cmake libopenmpi-dev libhdf5-openmpi-dev g++ ninja-b
 git clone https://github.com/PHAREHUB/PHARE -b master --depth 1 --recursive --shallow-submodules phare
 
 python3 -m venv .venv
+
 . .venv/bin/activate
 
 (
