@@ -26,7 +26,8 @@ python3 -m venv .venv
     mkdir build
     cd build
     cmake .. -DBUILD_SHARED_LIBS=ON -DENABLE_SAMRAI_TESTS=OFF -DCMAKE_BUILD_TYPE=Release \
-             -DENABLE_TIMERS=OFF -DENABLE_CHECK_ASSERTIONS=OFF
+             -DENABLE_TIMERS=OFF -DENABLE_CHECK_ASSERTIONS=OFF \
+             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 # TORM after https://github.com/LLNL/SAMRAI/issues/266
     make -j2
     make install
     cd ../..
