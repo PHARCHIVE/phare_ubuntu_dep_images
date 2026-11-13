@@ -10,7 +10,8 @@ PKGS="${PKGS} curl sudo"
 #  and HDF5_ROOT: the distro packages would shadow them
 [ -x /opt/mpi/bin/mpicc ] || PKGS="${PKGS} libopenmpi-dev libhdf5-openmpi-dev"
 # CUDA bases: Umpire (NUMA) RAJA and SAMRAI for CUDA, built with clang, see below
-[ -x /usr/local/cuda/bin/nvcc ] && PKGS="${PKGS} libnuma-dev"
+#  clang-22: clang 21 (26.04 default) can't parse CUDA 13 headers (texture_fetch_functions.h removed)
+[ -x /usr/local/cuda/bin/nvcc ] && PKGS="${PKGS} libnuma-dev clang-22"
 
 apt-get update
 apt-get install -y ${PKGS}
@@ -47,6 +48,9 @@ python3 -m venv .venv
 #  clang only, no nvcc. Into /mkn/r/llnl/<lib>/phare, where PHARE's CI and tools look for them
 #  CUDA_ARCH: sm_90, the simulated H100 of the hpc-containers cuda image
 if [ -x /usr/local/cuda/bin/nvcc ]; then
+    # the mkn.sh scripts call plain clang/clang++: /usr/local/bin is ahead of /usr/bin on PATH
+    ln -sf /usr/bin/clang-22 /usr/local/bin/clang
+    ln -sf /usr/bin/clang++-22 /usr/local/bin/clang++
     LLNL=/mkn/r/llnl
     for r in umpire raja samrai; do # in order, SAMRAI needs both
         git clone --depth 1 -b phare https://github.com/mkn-nix/llnl.$r ${LLNL}/$r/phare
@@ -54,6 +58,8 @@ if [ -x /usr/local/cuda/bin/nvcc ]; then
         sed -i 's/-march=native -mtune=native/-march=x86-64-v3/' ${LLNL}/$r/phare/mkn.sh
         (cd ${LLNL}/$r/phare && THREADS=$(nproc) CUDA_ARCH=sm_90 CMAKE_POLICY_VERSION_MINIMUM=3.5 \
             CUDA_HOME=$(readlink -f /usr/local/cuda) LLNL=${LLNL} bash mkn.sh)
+        # mkn.sh ends "make && make install; cd .. && rm -rf build": a failed make still exits 0
+        [ -d ${LLNL}/$r/phare/lib/cmake ] || { echo "$r: no install in ${LLNL}/$r/phare" >&2; exit 1; }
         rm -rf ${LLNL}/$r/phare/$r # sources and build dir, the install is include/ lib/ share/
     done
 fi
