@@ -44,23 +44,25 @@ python3 -m venv .venv
     rm -rf samrai
 )
 
-# CUDA bases: Umpire, RAJA, then SAMRAI on both, from the mkn-nix/llnl.* phare branches
-#  clang only, no nvcc. Into /mkn/r/llnl/<lib>/phare, where PHARE's CI and tools look for them
+# CUDA bases: Umpire, RAJA, then SAMRAI on both, built by the mkn-nix/llnl.* phare branch scripts
+#  clang only, no nvcc. Each script installs into its own clone dir: /opt/llnl/<lib>/{include,lib,share}
 #  CUDA_ARCH: sm_90, the simulated H100 of the hpc-containers cuda image
 if [ -x /usr/local/cuda/bin/nvcc ]; then
-    # the mkn.sh scripts call plain clang/clang++: /usr/local/bin is ahead of /usr/bin on PATH
+    # the scripts call plain clang/clang++: /usr/local/bin is ahead of /usr/bin on PATH
     ln -sf /usr/bin/clang-22 /usr/local/bin/clang
     ln -sf /usr/bin/clang++-22 /usr/local/bin/clang++
-    LLNL=/mkn/r/llnl
+    LLNL=/opt/llnl
     for r in umpire raja samrai; do # in order, SAMRAI needs both
-        git clone --depth 1 -b phare https://github.com/mkn-nix/llnl.$r ${LLNL}/$r/phare
+        git clone --depth 1 -b phare https://github.com/mkn-nix/llnl.$r ${LLNL}/$r
         # the scripts build -march=native: the image runs on whatever CPU pulls it
-        sed -i 's/-march=native -mtune=native/-march=x86-64-v3/' ${LLNL}/$r/phare/mkn.sh
-        (cd ${LLNL}/$r/phare && THREADS=$(nproc) CUDA_ARCH=sm_90 CMAKE_POLICY_VERSION_MINIMUM=3.5 \
-            CUDA_HOME=$(readlink -f /usr/local/cuda) LLNL=${LLNL} bash mkn.sh)
-        # mkn.sh ends "make && make install; cd .. && rm -rf build": a failed make still exits 0
-        [ -d ${LLNL}/$r/phare/lib/cmake ] || { echo "$r: no install in ${LLNL}/$r/phare" >&2; exit 1; }
-        rm -rf ${LLNL}/$r/phare/$r # sources and build dir, the install is include/ lib/ share/
+        sed -i 's/-march=native -mtune=native/-march=x86-64-v3/' ${LLNL}/$r/mkn.sh
+        (cd ${LLNL}/$r && THREADS=$(nproc) CUDA_ARCH=sm_90 CMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            CUDA_HOME=$(readlink -f /usr/local/cuda) UMPIRE_DIR=${LLNL}/umpire RAJA_DIR=${LLNL}/raja bash mkn.sh)
+        # the scripts end "make && make install; cd .. && rm -rf build": a failed make still exits 0
+        #  so look for the package config: lib/cmake/<pkg>/ (umpire, raja) or share/SAMRAI/cmake/
+        [ -n "$(find ${LLNL}/$r/lib ${LLNL}/$r/share -name '*[Cc]onfig.cmake' -print -quit 2>/dev/null)" ] \
+            || { echo "$r: no install in ${LLNL}/$r" >&2; exit 1; }
+        rm -rf ${LLNL}/$r/$r ${LLNL}/$r/.git # sources and build dir, the install is include/ lib/ share/
     done
 fi
 
