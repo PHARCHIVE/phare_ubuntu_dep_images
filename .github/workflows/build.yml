@@ -1,5 +1,9 @@
 name: CMake Ubuntu
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
   workflow_dispatch:
@@ -12,10 +16,18 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        images: ['ubuntu:24.04']
+        images: ['ubuntu:26.04', 'ghcr.io/0xz/hpc-containers:cuda', 'ghcr.io/0xz/hpc-containers:rocm']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
+
+    # the GPU toolkit bases are several GB each (hpc-containers:rocm ~8GB), more than a runner
+    #  has free by default
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        docker image prune -af
+        df -h /
 
     - name: Build
       run: chmod +x build.sh && ./build.sh ${{ matrix.images }}
@@ -27,4 +39,4 @@ jobs:
         password: ${{ secrets.GCHR_TOKEN }}
 
     - name: docker push
-      run: docker push ghcr.io/pharchive/phare_dep/${{ matrix.images }}
+      run: docker push ${IMAGE}
