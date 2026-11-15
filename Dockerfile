@@ -11,3 +11,4 @@ ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
 
 COPY run.sh /root
 RUN chmod +x /root/run.sh && /root/run.sh && useradd -ms /bin/bash runner
+
